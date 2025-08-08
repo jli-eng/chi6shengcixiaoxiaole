@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>中文六年级生词消消乐</title>
+    <style>
+        /* --- 基础与字体设置 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Nunito:wght@700&display=swap');
+
+        :root {
+            --sky-blue-light: #a7e0ff;
+            --sky-blue-dark: #69c0ff;
+            --bubble-pink: rgba(255, 183, 197, 0.9);
+            --bubble-yellow: rgba(255, 246, 183, 0.9);
+            --bubble-green: rgba(183, 255, 197, 0.9);
+            --bubble-purple: rgba(220, 183, 255, 0.9);
+            --highlight-color: #ffdd57;
+            --font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+            --text-color: #2c3e50;
+            --white-color: #ffffff;
+            --success-color: #27ae60;
+            --start-btn-bg: #ff7675;
+            --start-btn-hover: #d63031;
+            --selected-color: #48dbfb;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: var(--font-family);
+            overflow: hidden;
+            background: linear-gradient(to bottom, var(--sky-blue-light), var(--sky-blue-dark));
+            color: var(--text-color);
+            user-select: none;
+            font-weight: 700;
+        }
+
+        /* --- 背景云朵动画 --- */
+        .cloud { position: absolute; background: var(--white-color); border-radius: 50%; opacity: 0.8; filter: blur(2px); animation: moveClouds 80s linear infinite; }
+        .cloud:before, .cloud:after { content: ''; position: absolute; background: var(--white-color); border-radius: 50%; }
+        .cloud1 { width: 200px; height: 60px; top: 10%; left: -250px; }
+        .cloud1:before { width: 100px; height: 100px; top: -50px; left: 40px; }
+        .cloud1:after { width: 140px; height: 120px; top: -60px; right: 20px; }
+        .cloud2 { width: 250px; height: 80px; top: 25%; left: -300px; animation-duration: 60s; animation-delay: -20s; }
+        .cloud2:before { width: 120px; height: 120px; top: -60px; left: 50px; }
+        .cloud2:after { width: 160px; height: 140px; top: -70px; right: 30px; }
+        .cloud3 { width: 180px; height: 50px; top: 60%; left: -200px; animation-duration: 100s; animation-delay: -40s; }
+        .cloud3:before { width: 90px; height: 90px; top: -40px; left: 30px; }
+        .cloud3:after { width: 120px; height: 100px; top: -50px; right: 20px; }
+        @keyframes moveClouds { from { transform: translateX(0); } to { transform: translateX(calc(100vw + 300px)); } }
+
+        /* --- 整体布局 --- */
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1.5vh 2vw;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- 控制区 --- */
+        .controls-area {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 1vh 2vw;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            margin-bottom: 1.5vh;
+            flex-shrink: 0;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: clamp(1.5em, 4vmin, 2.2em);
+            color: var(--start-btn-hover);
+            margin: 0 0 1vh 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+
+        #unit-selection-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1vh;
+        }
+
+        #unit-selection-container label {
+            display: flex;
+            align-items: center;
+            background: var(--white-color);
+            padding: 0.8vh 1.5vw;
+            font-size: clamp(0.8em, 2vmin, 1em);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #unit-selection-container input { margin-right: 8px; width: 1.8vmin; height: 1.8vmin; }
+        
+        #custom-list-container {
+            padding: 1vh;
+        }
+        #custom-list-textarea {
+            width: 100%;
+            height: 80px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: clamp(0.8em, 2vmin, 1em);
+            box-sizing: border-box;
+        }
+
+
+        .game-info { 
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+        .progress-container { justify-self: start; }
+        .start-button-wrapper { justify-self: center; }
+        .timer-container { justify-self: end; }
+        
+        .progress-container, .timer-container { font-size: clamp(0.8em, 2.2vmin, 1.1em); }
+        .progress-bar { width: 20vw; max-width: 150px; height: 2.2vmin; min-height: 18px; background: #e0e0e0; border-radius: 10px; overflow: hidden; display: inline-block; margin-left: 10px; vertical-align: middle; }
+        .progress-bar-inner { width: 0%; height: 100%; background: var(--success-color); border-radius: 10px; transition: width 0.5s ease; }
+
+        .start-button {
+            padding: 1vh 3vw;
+            font-size: clamp(1em, 2.5vmin, 1.3em);
+            border: none; border-radius: 15px; background: var(--start-btn-bg); color: var(--white-color); cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        .start-button:hover { background: var(--start-btn-hover); transform: translateY(-2px); }
+        .start-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* --- 游戏区 --- */
+        .game-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 0;
+        }
+
+        .bubbles-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 1.2vmin;
+            padding: 1.2vmin;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1) inset;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .bubble {
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(10px, 3.5vmin, 24px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+            animation: float 6s ease-in-out infinite;
+            padding: 5px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow: hidden;
+        }
+
+        .bubble:nth-child(4n+1) { background-color: var(--bubble-pink); animation-delay: 0s; }
+        .bubble:nth-child(4n+2) { background-color: var(--bubble-yellow); animation-delay: -1.5s; }
+        .bubble:nth-child(4n+3) { background-color: var(--bubble-green); animation-delay: -3s; }
+        .bubble:nth-child(4n) { background-color: var(--bubble-purple); animation-delay: -4.5s; }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+        
+        .bubble.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px var(--selected-color);
+            border: 4px solid var(--selected-color);
+        }
+        
+        .bubble.pop {
+            animation: pop-out 0.5s forwards;
+            pointer-events: none;
+        }
+        @keyframes pop-out {
+            0% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; visibility: hidden; }
+        }
+
+        .bubble.wrong { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        /* --- 结束弹窗 --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; visibility: hidden; opacity: 0; transition: opacity 0.5s ease, visibility 0.5s ease; }
+        .modal-overlay.show { visibility: visible; opacity: 1; }
+        .modal-content { background: var(--white-color); padding: 40px; border-radius: 25px; text-align: center; transform: scale(0.7); transition: transform 0.5s ease; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+        .modal-content h2 { font-size: 2.5em; color: var(--success-color); margin-top: 0; margin-bottom: 20px; }
+        .modal-content p { font-size: 1.5em; margin-bottom: 30px; }
+
+        /* --- 烟花效果 --- */
+        .firework { position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; opacity: 1; animation: firework-explode 1s forwards; }
+        @keyframes firework-explode { to { transform: translate(var(--x), var(--y)) scale(1.5); opacity: 0; } }
+
+        /* --- 响应式设计 --- */
+        @media (orientation: portrait) {
+            .bubbles-container {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(6, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景云朵 -->
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
+
+    <div class="game-container">
+        <!-- 控制区 -->
+        <div class="controls-area">
+            <h1 class="title">中文六年级生词消消乐 🎈</h1>
+            <div id="unit-selection-container">
+                <label><input type="checkbox" name="unit" value="lesson2"> 第二课</label>
+                <label><input type="checkbox" name="unit" value="lesson4"> 第四课</label>
+                <label><input type="checkbox" name="unit" value="lesson5"> 第五课</label>
+                <label><input type="checkbox" name="unit" value="lesson6"> 第六课</label>
+                <label><input type="checkbox" name="unit" value="lesson7"> 第七课</label>
+                <label><input type="checkbox" name="unit" value="lesson8"> 第八课</label>
+                <label><input type="checkbox" name="unit" value="lesson9"> 第九课</label>
+                <label><input type="checkbox" name="unit" value="lesson10"> 第十课</label>
+                <label><input type="checkbox" name="unit" value="custom" id="custom-checkbox"> 自定义</label>
+            </div>
+            <div id="custom-list-container" style="display: none;">
+                <textarea id="custom-list-textarea" placeholder="请输入生字和英文意思，每行一对，用空格隔开。例如:&#10;我 I, me"></textarea>
+            </div>
+            <div class="game-info">
+                <div class="progress-container">
+                    <span>进度:</span>
+                    <div class="progress-bar"><div class="progress-bar-inner"></div></div>
+                </div>
+                <div class="start-button-wrapper">
+                    <button class="start-button" id="startButton" disabled>开始游戏</button>
+                </div>
+                <div class="timer-container">
+                    <span>时间:</span>
+                    <span id="timer">0s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏区 -->
+        <div class="game-area">
+            <div class="bubbles-container" id="bubblesContainer">
+                <!-- 泡泡会由JS动态生成在这里 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div class="modal-overlay" id="winModal">
+        <div class="modal-content">
+            <h2 id="winMessage">🎉 恭喜你！🎉</h2>
+            <p id="winTime"></p>
+            <button class="start-button" id="playAgainButton">再玩一次</button>
+        </div>
+    </div>
+
+    <!-- 引入Tone.js用于音效 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DOM 元素获取 ---
+            const startButton = document.getElementById('startButton');
+            const playAgainButton = document.getElementById('playAgainButton');
+            const bubblesContainer = document.getElementById('bubblesContainer');
+            const timerEl = document.getElementById('timer');
+            const progressBarInner = document.querySelector('.progress-bar-inner');
+            const winModal = document.getElementById('winModal');
+            const unitCheckboxes = document.querySelectorAll('input[name="unit"]');
+            const customCheckbox = document.getElementById('custom-checkbox');
+            const customListContainer = document.getElementById('custom-list-container');
+            const customListTextarea = document.getElementById('custom-list-textarea');
+
+            // --- 生字数据 ---
+            const wordLists = {
+                lesson2: [
+                    {char: "你", meaning: "you (singular)"},
+                    {char: "好", meaning: "good, well; hello, hi used in greeting"},
+                    {char: "你好", meaning: "hello, how do you do"},
+                    {char: "我", meaning: "I, me"},
+                    {char: "是", meaning: "am, is, are"},
+                    {char: "他", meaning: "he, him"},
+                    {char: "她", meaning: "she, her"},
+                    {char: "它", meaning: "it"},
+                    {char: "谁", meaning: "who/whom"},
+                    {char: "李", meaning: "a family name; plum"},
+                    {char: "兰兰", meaning: "a Chinese given name (兰- orchid)"},
+                    {char: "白", meaning: "a family name; white"},
+                    {char: "大伟", meaning: "Chinese for David (大- big; 伟- great)"},
+                    {char: "再见", meaning: "goodbye"},
+                    {char: "林", meaning: "a family name; forest"},
+                    {char: "老师", meaning: "teacher"},
+                    {char: "们", meaning: "[used after a pronoun or noun associated with people to show plural]"},
+                    {char: "我们", meaning: "we; us"},
+                    {char: "你们", meaning: "you (plural)"},
+                    {char: "他们", meaning: "they; them"},
+                    {char: "她们", meaning: "they, them (all female)"},
+                    {char: "同学", meaning: "fellow student, schoolmate/classmate"},
+                    {char: "同学们", meaning: "fellow students, classmates"},
+                    {char: "早", meaning: "morning, early"},
+                    {char: "明天", meaning: "tomorrow"},
+                    {char: "见", meaning: "to see"},
+                    {char: "明天见", meaning: "See you tomorrow"},
+                    {char: "亻", meaning: "standing person"},
+                    {char: "女", meaning: "woman, girl"},
+                    {char: "日", meaning: "sun, clear"}
+                ],
+                lesson4: [
+                    {char: "谁", meaning: "who, whom?"},
+                    {char: "马克", meaning: "Chinese for Mark"},
+                    {char: "她", meaning: "she, her"},
+                    {char: "老师", meaning: "teacher"},
+                    {char: "啊", meaning: "(an exclamation)"},
+                    {char: "欢迎", meaning: "welcome"},
+                    {char: "请进", meaning: "come in please"},
+                    {char: "谢谢", meaning: "thanks"},
+                    {char: "祝", meaning: "to wish (offer good wishes)"},
+                    {char: "生日", meaning: "birthday"},
+                    {char: "快乐", meaning: "happy"},
+                    {char: "今天", meaning: "today"},
+                    {char: "今年", meaning: "this year"},
+                    {char: "几", meaning: "how many"},
+                    {char: "岁", meaning: "year of age"},
+                    {char: "两", meaning: "two (before measure words, age, and some numerals)"},
+                    {char: "谁啊？", meaning: "Who's it？"},
+                    {char: "是我。", meaning: "It's me!"},
+                    {char: "你是谁？", meaning: "Who are you?"},
+                    {char: "我是兰兰。", meaning: "I am lanlan."},
+                    {char: "请进。", meaning: "Please come in."},
+                    {char: "祝你生日快乐。", meaning: "Happy Birthday to you."},
+                    {char: "你今年几岁？", meaning: "How old are you this year?"},
+                    {char: "你多大？", meaning: "How old are you?"},
+                    {char: "我十一岁。", meaning: "I am 11."},
+                    {char: "他/她几岁？", meaning: "How old is he/she?"},
+                    {char: "他/她两岁。", meaning: "He/she is two."},
+                    {char: "你属什么？", meaning: "What's your zodiac animal?"},
+                    {char: "属", meaning: "belong to"}
+                ],
+                lesson5: [
+                    {char: "这", meaning: "this"},
+                    {char: "那", meaning: "that"},
+                    {char: "什么", meaning: "what"},
+                    {char: "知道", meaning: "to know"},
+                    {char: "吗", meaning: "a question word for \"yes-no\" questions"},
+                    {char: "不", meaning: "no, not; tone changes to second when followed by fourth tone"},
+                    {char: "教室", meaning: "classroom"},
+                    {char: "门", meaning: "door"},
+                    {char: "桌子", meaning: "desk"},
+                    {char: "椅子", meaning: "chair"},
+                    {char: "白板", meaning: "whiteboard"},
+                    {char: "纸", meaning: "paper"},
+                    {char: "尺", meaning: "ruler"},
+                    {char: "笔", meaning: "pen, pencil"},
+                    {char: "书", meaning: "book"},
+                    {char: "毛笔", meaning: "writing brush"},
+                    {char: "剪刀", meaning: "scissors"},
+                    {char: "书包", meaning: "schoolbag"},
+                    {char: "橡皮", meaning: "eraser"},
+                    {char: "的", meaning: "(a possessive particle used after pronoun/noun)"},
+                    {char: "谁的", meaning: "whose"},
+                    {char: "我的", meaning: "my, mine"},
+                    {char: "你的", meaning: "your, yours"},
+                    {char: "大概", meaning: "probably"},
+                    {char: "不是", meaning: "no (negative form of shì)"},
+                    {char: "小明", meaning: "a Chinese given name"},
+                    {char: "是的", meaning: "Yes! Right! Correct!（positive answer to questions using the verb shì 是）"},
+                    {char: "不客气", meaning: "not at all, don't mention it, you're welcome"},
+                    {char: "和", meaning: "and"},
+                    {char: "这是什么？", meaning: "What is this?"},
+                    {char: "那是什么？", meaning: "What is that?"},
+                    {char: "我不知道。", meaning: "I don't know."},
+                    {char: "你知道吗？", meaning: "Do you know?"},
+                    {char: "这是谁的橡皮？", meaning: "Whose eraser is this?"},
+                    {char: "那是马克的。", meaning: "That is Mark's."},
+                    {char: "大概是老师的。", meaning: "It's probably the teacher's."},
+                    {char: "这是你的书包吗？", meaning: "Is this your school bag?"},
+                    {char: "不是，那不是我的。", meaning: "No, that's not mine."},
+                    {char: "是的，这是我的。", meaning: "Yes, it's mine."},
+                    {char: "辶", meaning: "walking, movement"},
+                    {char: "阝", meaning: "city"},
+                    {char: "亻", meaning: "standing person"},
+                    {char: "口", meaning: "mouth，sounding，opening"},
+                    {char: "白", meaning: "white"}
+                ],
+                lesson6: [
+                    {char: "爸爸", meaning: ""},
+                    {char: "妈妈", meaning: ""},
+                    {char: "哥哥", meaning: ""},
+                    {char: "姐姐", meaning: ""},
+                    {char: "弟弟", meaning: ""},
+                    {char: "妹妹", meaning: ""},
+                    {char: "外公", meaning: "mother's dad"},
+                    {char: "外婆", meaning: "mother's mom"},
+                    {char: "爷爷", meaning: "father's dad"},
+                    {char: "奶奶", meaning: "father's mom"},
+                    {char: "家", meaning: "family, home"},
+                    {char: "家人", meaning: "family members"},
+                    {char: "有", meaning: "to have, there is/are"},
+                    {char: "几", meaning: "how much / how many / several / a few"},
+                    {char: "个", meaning: "(a common measure word which can be used for people)"},
+                    {char: "你家有几个人？", meaning: "How many people are there in your family?"},
+                    {char: "没", meaning: "a negative word"},
+                    {char: "没有", meaning: "not have"},
+                    {char: "也", meaning: "also, too"},
+                    {char: "和", meaning: "and"},
+                    {char: "呢", meaning: "(a question word) how about"},
+                    {char: "姓", meaning: "to be surnamed; to have the surname"},
+                    {char: "我姓李。", meaning: "I have the surname Li."},
+                    {char: "叫", meaning: "to (be) call(ed)"},
+                    {char: "名字", meaning: "name"},
+                    {char: "姓名", meaning: "full name"},
+                    {char: "学生", meaning: "student"},
+                    {char: "工人", meaning: "labourer, worker"},
+                    {char: "护士", meaning: "nurse"},
+                    {char: "医生", meaning: "doctor"},
+                    {char: "丽丽", meaning: "Chinese for Lily"},
+                    {char: "这是我的爸爸。", meaning: "this is my dad"},
+                    {char: "他今年四十五岁。", meaning: "He's 45 years old."},
+                    {char: "他是工人。", meaning: "He is a worker."},
+                    {char: "你姓什么？", meaning: "What is your last name?"},
+                    {char: "你叫什么？", meaning: "What is your name?"},
+                    {char: "我家有三个人，你家呢？", meaning: "My family has 3 people. How about yours?"},
+                    {char: "你有哥哥吗？", meaning: "Do you have older brothers?"},
+                    {char: "有，我有一个哥哥。", meaning: "Yes, I have an older brother."},
+                    {char: "你有没有姐姐？", meaning: "Do you have an older sister?"},
+                    {char: "没有，我没有姐姐。", meaning: "No, I don't have older sisters."},
+                    {char: "你叫什么名字？", meaning: "What is your name?"},
+                    {char: "父", meaning: "father"},
+                    {char: "女", meaning: "women"},
+                    {char: "宀", meaning: "roof with chimney"},
+                    {char: "月", meaning: "moon；month"},
+                    {char: "口", meaning: "mouth; sounding; opening"}
+                ],
+                lesson7: [
+                    {char: "你家有什么宠物？", meaning: "What pets does your family have?"},
+                    {char: "你家有什么人？", meaning: "What members does your family have?"},
+                    {char: "动物", meaning: "animal"},
+                    {char: "宠物", meaning: "pet"},
+                    {char: "猫", meaning: "cat"},
+                    {char: "狗", meaning: "dog"},
+                    {char: "马", meaning: "horse"},
+                    {char: "金鱼", meaning: "goldfish"},
+                    {char: "鸟", meaning: "bird"},
+                    {char: "羊", meaning: "sheep"},
+                    {char: "龙", meaning: "dragon"},
+                    {char: "熊猫", meaning: "panda"},
+                    {char: "老鼠", meaning: "rat / mouse"},
+                    {char: "兔子", meaning: "rabbit, hare"},
+                    {char: "蛇", meaning: "snake"},
+                    {char: "鸡", meaning: "chicken"},
+                    {char: "只", meaning: "a measure word for most animals"},
+                    {char: "匹", meaning: "a measure word for horses, mules"},
+                    {char: "条", meaning: "measure word for long, thin things (i.e. ribbon, river, etc.); a strip; item; article"},
+                    {char: "很", meaning: "to be (is, am, are); very"},
+                    {char: "大", meaning: "big"},
+                    {char: "小", meaning: "small, little (in size)"},
+                    {char: "凶", meaning: "fierce, ferocious"},
+                    {char: "可爱", meaning: "cute / lovely"},
+                    {char: "真", meaning: "really"},
+                    {char: "是啊", meaning: "yes, yeah (shows agreement)"},
+                    {char: "它", meaning: "it"},
+                    {char: "都", meaning: "both; all"},
+                    {char: "有......吗？", meaning: "have or not?"},
+                    {char: "有......吗=有没有", meaning: "to have or not have (Do you have~)"},
+                    {char: "你家有宠物吗？", meaning: "Does your family have pets?"},
+                    {char: "我家有两只狗，四匹马，六条金鱼，五只猫和三只鸟。", meaning: "My family has 2 dogs, 4 horses, 6 fish, 5 cats and 3 birds."},
+                    {char: "这匹马很大。", meaning: "This horse is big."},
+                    {char: "那只鸟很小。", meaning: "That bird is small."},
+                    {char: "这只狗很凶。", meaning: "This dog is fierce."},
+                    {char: "这个小妹妹很可爱。", meaning: "This little girl is cute."},
+                    {char: "那只狗是谁的？", meaning: "Whose dog is that?"},
+                    {char: "是我的。", meaning: "It is mine."},
+                    {char: "你的狗真小。", meaning: "Your dog is really small."},
+                    {char: "是啊！它很可爱。", meaning: "Yes, it is cute."},
+                    {char: "你有没有狗？", meaning: "Do you have a dog?"},
+                    {char: "你家有什么人？ /你家有谁？", meaning: "What members does your family have? /Who are the people in your family?"},
+                    {char: "我家有爸爸、妈妈、哥哥和我。", meaning: "My family has dad, mom, older brother and me."}
+                ],
+                lesson8: [
+                    {char: "中国", meaning: "China"},
+                    {char: "英国", meaning: "England"},
+                    {char: "美国", meaning: "United States; America"},
+                    {char: "德国", meaning: "Germany"},
+                    {char: "加拿大", meaning: "Canada"},
+                    {char: "日本", meaning: "Japan"},
+                    {char: "新西兰", meaning: "New Zealand"},
+                    {char: "澳大利亚", meaning: "Australia"},
+                    {char: "法国", meaning: "France"},
+                    {char: "国家", meaning: "country"},
+                    {char: "外国", meaning: "foreign country"},
+                    {char: "语言", meaning: "language"},
+                    {char: "外语", meaning: "Foreign language"},
+                    {char: "哪", meaning: "which"},
+                    {char: "国", meaning: "country"},
+                    {char: "你是哪国人？", meaning: "What is your nationality?"},
+                    {char: "也", meaning: "also, too"},
+                    {char: "是不是", meaning: "is or isn't/yes or no/whether or not"},
+                    {char: "是......吗", meaning: "yes or not?"},
+                    {char: "有没有", meaning: "to have or not have (Do you have~)"},
+                    {char: "有......吗", meaning: "have or not?"},
+                    {char: "对不起", meaning: "I'm sorry"},
+                    {char: "没关系", meaning: "it doesn't matter, that's all right"},
+                    {char: "请问", meaning: "may I ask"},
+                    {char: "小妹妹", meaning: "little girl"},
+                    {char: "会", meaning: "can, to be able to"},
+                    {char: "不会", meaning: "to be unable to, cannot"},
+                    {char: "会不会", meaning: "can or cannot"},
+                    {char: "会......吗", meaning: "can or not?"},
+                    {char: "说", meaning: "to speak, to say"},
+                    {char: "汉语", meaning: "Chinese language"},
+                    {char: "咦", meaning: "why! huh! (indicating surprise)"},
+                    {char: "一点儿", meaning: "a little, a bit"},
+                    {char: "得", meaning: "(used after a verb to indicate the degree or result)"},
+                    {char: "哪里！哪里！", meaning: "not at all (said when praised; literally where)"},
+                    {char: "英语", meaning: "English"},
+                    {char: "日语", meaning: "Japanese language"},
+                    {char: "德语", meaning: "German language"},
+                    {char: "你是哪国人？", meaning: "What is your nationality?"},
+                    {char: "你是中国人吗？", meaning: "Are you Chinese？"},
+                    {char: "你妈妈也是英国人吗?", meaning: "Is your mom also English?"},
+                    {char: "不是，她是美国人。", meaning: "No, she is American."},
+                    {char: "没关系", meaning: "Doesn't Matter"},
+                    {char: "请问，你是不是美国人？", meaning: "May I ask, are you American?"},
+                    {char: "你会说汉语吗？", meaning: "Can you speak Chinese?"},
+                    {char: "她不会说汉语。", meaning: "She doesn't speak Chinese."},
+                    {char: "我会说一点儿汉语。", meaning: "I can speak a bit of Chinese."},
+                    {char: "你说得很好。", meaning: "You speak very well"},
+                    {char: "你会不会说德语？", meaning: "Can you speak German?"},
+                    {char: "你会说什么语言？", meaning: "What language can you speak?"},
+                    {char: "他英语说得很好。", meaning: "He speaks English well."},
+                    {char: "囗", meaning: "enclosure"},
+                    {char: "门", meaning: "door"},
+                    {char: "讠", meaning: "speech"}
+                ],
+                lesson9: [
+                    {char: "运动", meaning: "sports, exercise"},
+                    {char: "你的运动是什么？（运动 N.）", meaning: "What sports do you play?"},
+                    {char: "你今天运动了吗？（运动 V.）", meaning: "Did you exercise today?"},
+                    {char: "喜欢", meaning: "to like"},
+                    {char: "游泳", meaning: "swimming, to swim"},
+                    {char: "骑车", meaning: "cycling, to ride a bike"},
+                    {char: "跑步", meaning: "running, to jog"},
+                    {char: "踢", meaning: "to kick, to play (soccer)"},
+                    {char: "足球", meaning: "soccer"},
+                    {char: "踢足球", meaning: "to play soccer"},
+                    {char: "打", meaning: "to hit; to play (ball game, taichi, etc.); to dial (telephone)"},
+                    {char: "篮球", meaning: "basketball"},
+                    {char: "打篮球", meaning: "play basketball"},
+                    {char: "网球", meaning: "tennis"},
+                    {char: "乒乓球", meaning: "table tennis"},
+                    {char: "板球", meaning: "cricket (ball game)"},
+                    {char: "喂", meaning: "hello; hey"},
+                    {char: "去", meaning: "to go"},
+                    {char: "好吗", meaning: "OK? (expression to ask for agreement)"},
+                    {char: "好啊", meaning: "ok!/good! (agreeing)"},
+                    {char: "最", meaning: "most"},
+                    {char: "不去", meaning: "not going"},
+                    {char: "走", meaning: "to go, to walk (physically)"},
+                    {char: "吧", meaning: "(an expression used at the end of a sentence to indicate suggestion)"},
+                    {char: "我们走吧", meaning: "let's go"},
+                    {char: "忙", meaning: "busy"},
+                    {char: "球", meaning: "ball"},
+                    {char: "你喜欢运动吗？", meaning: "Do you like doing exercise?"},
+                    {char: "你喜不喜欢运动？", meaning: "Do you like doing exercise?"},
+                    {char: "你喜欢不喜欢运动？", meaning: "Do you like doing exercise?"},
+                    {char: "你喜欢什么运动？", meaning: "What sports do you like?"},
+                    {char: "你喜欢游泳吗？", meaning: "Do you like swimming?"},
+                    {char: "我喜欢，你呢？", meaning: "I like it, how about you?"},
+                    {char: "我不喜欢踢足球。", meaning: "I don't like to play football."},
+                    {char: "你喜欢不喜欢打篮球？", meaning: "Do you like to play basketball?"},
+                    {char: "喂，我们去打板球，好吗？", meaning: "Hey, let's go to play cricket, all right?"},
+                    {char: "好啊！我最喜欢打乒乓球。", meaning: "OK。I like to play table tennis the most."},
+                    {char: "我不去。我很忙。", meaning: "I can't go. I am busy."},
+                    {char: "我们走吧！", meaning: "Let's go."},
+                    {char: "你喜不喜欢跑步？", meaning: "Do you like running?"},
+                    {char: "你最喜欢什么运动？", meaning: "What sport do you like the most？"},
+                    {char: "口", meaning: "mouth；sounding；opening"},
+                    {char: "⻌", meaning: "walking；movement"},
+                    {char: "力", meaning: "strength；power"},
+                    {char: "扌", meaning: "hand; hand actions"},
+                    {char: "王", meaning: "jade; king"}
+                ],
+                lesson10: [
+                    {char: "眉毛", meaning: "eyebrow"},
+                    {char: "眼睛", meaning: "eye"},
+                    {char: "鼻子", meaning: "nose"},
+                    {char: "嘴巴", meaning: "mouth"},
+                    {char: "头", meaning: "head"},
+                    {char: "耳朵", meaning: "ear"},
+                    {char: "脸", meaning: "face"},
+                    {char: "头发", meaning: "hair"},
+                    {char: "长", meaning: "long"},
+                    {char: "短", meaning: "short"},
+                    {char: "朋友", meaning: "friend"},
+                    {char: "王", meaning: "king, a surname"},
+                    {char: "美怡", meaning: "a given name"},
+                    {char: "上", meaning: "to go, to attend"},
+                    {char: "年级", meaning: "grade"},
+                    {char: "学校", meaning: "school"},
+                    {char: "碧丘学校", meaning: "Greenhills School"},
+                    {char: "同学", meaning: "classmate"},
+                    {char: "同班", meaning: "same class"},
+                    {char: "和......同班", meaning: "be in the same class as somebody"},
+                    {char: "口", meaning: "mouth, sounding, opening"},
+                    {char: "月", meaning: "moon; body related"},
+                    {char: "纟", meaning: "silk；fabric"},
+                    {char: "禾", meaning: "crops"},
+                    {char: "冂", meaning: "border"},
+                    {char: "子", meaning: "child; son"},
+                    {char: "又", meaning: "right hand; again"},
+                    {char: "这是我们的学校。", meaning: "This is our school."},
+                    {char: "你们的学校真大。", meaning: "Your school is really big."},
+                    {char: "他是我的同学，白大伟。", meaning: "He is my classmate, David Bai."},
+                    {char: "这是我的朋友。她叫王美怡。", meaning: "This is my friend. She is called Meiyi Wang."},
+                    {char: "你上几年级？", meaning: "What grade are you going to?"},
+                    {char: "我上九年级，你呢？", meaning: "I'm in ninth grade, how about you?"},
+                    {char: "兰兰也上七年级。", meaning: "Lanlan is also in 7th grade."},
+                    {char: "大伟和我同班。", meaning: "David and me are in the same class."},
+                    {char: "小明也和你同班吗？", meaning: "Is Xiao Ming also in the same class as you?"},
+                    {char: "是的，我们都同班。", meaning: "Yes, we are all in the same class."},
+                    {char: "走，我们去打网球吧！", meaning: "Go, let go to play tennis."},
+                    {char: "好啊！我们走。", meaning: "OK! Let's go."},
+                    {char: "不，我不和她同班。", meaning: "No, I'm not in the same class as her."}
+                ]
+            };
+
+            // --- 音效合成器 ---
+            let synth;
+            const correctSound = () => { if (synth) synth.triggerAttackRelease('C5', '8n', Tone.now()); };
+            const wrongSound = () => { if (synth) synth.triggerAttackRelease('G3', '8n', Tone.now()); };
+            const popSound = () => { if(Tone && Tone.MembraneSynth){ const popSynth = new Tone.MembraneSynth().toDestination(); popSynth.triggerAttackRelease('C2', '8n', Tone.now()); } };
+
+            // --- 游戏状态变量 ---
+            let gameState = { isGameRunning: false, timerId: null, seconds: 0, firstSelection: null, totalPairs: 0, foundPairs: 0 };
+
+            // --- 事件监听 ---
+            startButton.addEventListener('click', startGame);
+            playAgainButton.addEventListener('click', startGame);
+            bubblesContainer.addEventListener('click', handleBubbleClick);
+            unitCheckboxes.forEach(checkbox => checkbox.addEventListener('change', checkStartButtonState));
+            customListTextarea.addEventListener('input', checkStartButtonState);
+
+
+            function checkStartButtonState() {
+                const anyUnitChecked = Array.from(unitCheckboxes).some(cb => cb.checked && cb.value !== 'custom');
+                const customChecked = customCheckbox.checked;
+                customListContainer.style.display = customChecked ? 'block' : 'none';
+
+                if (customChecked) {
+                    startButton.disabled = parseCustomList(customListTextarea.value).length === 0;
+                } else {
+                    startButton.disabled = !anyUnitChecked;
+                }
+            }
+
+
+            // --- 核心功能函数 ---
+            function startGame() {
+                // 初始化音效
+                if (!synth && typeof Tone !== 'undefined') { 
+                    try { 
+                        synth = new Tone.PolySynth(Tone.FMSynth).toDestination();
+                    } catch (e) { 
+                        console.error("Tone.js could not be initialized.", e); 
+                    } 
+                }
+
+                // 重置游戏状态
+                if (gameState.timerId) clearInterval(gameState.timerId);
+                gameState = { ...gameState, isGameRunning: true, seconds: 0, foundPairs: 0, firstSelection: null };
+                bubblesContainer.innerHTML = '';
+                winModal.classList.remove('show');
+                timerEl.textContent = '0s';
+
+                // 获取生字列表
+                let wordList = getWordList();
+                if (wordList.length < 12) {
+                    alert('所选单元的生字不足12对，请选择更多单元或在自定义中添加！');
+                    return;
+                }
+
+                // 准备游戏数据
+                const gamePairs = shuffleArray(wordList).slice(0, 12);
+                gameState.totalPairs = gamePairs.length;
+                let allBubblesData = [];
+                gamePairs.forEach((pair, index) => {
+                    allBubblesData.push({ value: pair.char, type: 'char', pairId: index });
+                    allBubblesData.push({ value: pair.meaning, type: 'meaning', pairId: index });
+                });
+                
+                // 创建泡泡并开始计时
+                shuffleArray(allBubblesData).forEach(data => createBubble(data));
+                updateProgress();
+                gameState.timerId = setInterval(updateTimer, 1000);
+            }
+            
+            function getWordList() {
+                let combinedList = [];
+                unitCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked && checkbox.value !== 'custom') {
+                        combinedList = combinedList.concat(wordLists[checkbox.value]);
+                    }
+                });
+
+                if (customCheckbox.checked) {
+                    combinedList = combinedList.concat(parseCustomList(customListTextarea.value));
+                }
+                // 去重
+                return combinedList.filter((item, index, self) => 
+                    index === self.findIndex((t) => (
+                        t.char === item.char && t.meaning === item.meaning
+                    ))
+                );
+            }
+
+            function parseCustomList(text) {
+                return text.split('\n')
+                           .map(line => line.trim())
+                           .filter(line => line)
+                           .map(line => {
+                               const parts = line.split(/\s+/);
+                               if (parts.length >= 2) {
+                                   return { char: parts[0], meaning: parts.slice(1).join(' ') };
+                               }
+                               return null;
+                           })
+                           .filter(item => item);
+            }
+
+
+            function handleBubbleClick(e) {
+                if (!gameState.isGameRunning) return;
+                const clickedBubble = e.target.closest('.bubble');
+                if (!clickedBubble || clickedBubble.classList.contains('pop')) return;
+
+                if (gameState.firstSelection === clickedBubble) {
+                    clickedBubble.classList.remove('selected');
+                    gameState.firstSelection = null;
+                    return;
+                }
+
+                if (!gameState.firstSelection) {
+                    gameState.firstSelection = clickedBubble;
+                    clickedBubble.classList.add('selected');
+                } else {
+                    const first = gameState.firstSelection.dataset;
+                    const second = clickedBubble.dataset;
+
+                    if (first.pairId === second.pairId && first.type !== second.type) {
+                        correctSound();
+                        popSound();
+                        gameState.firstSelection.classList.add('pop');
+                        clickedBubble.classList.add('pop');
+                        gameState.foundPairs++;
+                        updateProgress();
+                        if (gameState.foundPairs === gameState.totalPairs) {
+                            endGame();
+                        }
+                    } else {
+                        wrongSound();
+                        gameState.firstSelection.classList.add('wrong');
+                        clickedBubble.classList.add('wrong');
+                        setTimeout(() => {
+                            gameState.firstSelection.classList.remove('wrong');
+                            clickedBubble.classList.remove('wrong');
+                        }, 400);
+                    }
+                    gameState.firstSelection.classList.remove('selected');
+                    gameState.firstSelection = null;
+                }
+            }
+
+            function endGame() {
+                clearInterval(gameState.timerId);
+                gameState.isGameRunning = false;
+                document.getElementById('winMessage').textContent = '🎉 太棒啦！全部完成！ 🎉';
+                document.getElementById('winTime').textContent = `用时: ${gameState.seconds} 秒`;
+                winModal.classList.add('show');
+                for (let i = 0; i < 30; i++) createFirework();
+            }
+
+            function createBubble(data) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = data.value;
+                bubble.dataset.value = data.value;
+                bubble.dataset.type = data.type;
+                bubble.dataset.pairId = data.pairId;
+                bubblesContainer.appendChild(bubble);
+            }
+
+            function updateTimer() {
+                gameState.seconds++;
+                timerEl.textContent = `${gameState.seconds}s`;
+            }
+            
+            function updateProgress() {
+                const percentage = gameState.totalPairs > 0 ? (gameState.foundPairs / gameState.totalPairs) * 100 : 0;
+                progressBarInner.style.width = `${percentage}%`;
+            }
+
+            function createFirework() {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                const modalContent = winModal.querySelector('.modal-content');
+                modalContent.appendChild(firework);
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 150 + 50;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                firework.style.setProperty('--x', `${x}px`);
+                firework.style.setProperty('--y', `${y}px`);
+                firework.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                const startX = modalContent.offsetWidth / 2;
+                const startY = modalContent.offsetHeight / 2;
+                firework.style.left = `${startX}px`;
+                firework.style.top = `${startY}px`;
+                setTimeout(() => firework.remove(), 1000);
+            }
+
+            function shuffleArray(array) {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            }
+        });
+    </script>
+</body>
+</html>
+    
